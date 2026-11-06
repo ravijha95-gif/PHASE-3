@@ -1,21 +1,19 @@
 # Runtime integration checklist
 
-Do not mark the runtime as installed until all required assets are packaged and validated on-device.
+Status reflects source/build wiring only. The merged APK and runtime must pass CI and on-device validation before advertising a working Windows gaming experience.
 
-- [ ] Select and pin an upstream Winlator revision.
-- [ ] Review upstream licence and all submodule licences.
-- [ ] Import required Android Java/Kotlin application components.
-- [ ] Integrate native ARM64 libraries and their ABI packaging rules.
-- [ ] Integrate Wine and Box86/Box64 userland components.
-- [ ] Integrate root filesystem/PRoot setup and extraction lifecycle.
-- [ ] Integrate Mesa/Vulkan/OpenGL components compatible with Mali-G610.
-- [ ] Implement container creation, persistence, start/stop and logs.
-- [ ] Implement shortcut/executable launch API.
-- [ ] Connect PROJECT R game profiles to container/shortcut identifiers.
-- [ ] Test on Redmi K50i; record actual Vulkan/OpenGL renderer and logs.
-- [ ] Test IGI 2 installation, Direct3D 8 rendering, audio and input.
-- [ ] Add all required licence texts and notices to About / open-source notices.
-
-## Architecture decision
-
-Preferred approach: fork/port the upstream Winlator application as the runtime host and adapt its Android presentation and launcher flows. Do not attempt to package the entire runtime as a normal Maven dependency; the runtime includes native binaries, rootfs assets, setup scripts and lifecycle code.
+- [x] Pin Winlator app source revision `2c33741d50c5daab0521a098be5c969f63b9e887` as `runtime/winlator-app` submodule.
+- [ ] Review upstream and every bundled component's licence; add complete in-app / distribution notices.
+- [x] Wire upstream Java source, resources, runtime assets, and JNI libraries into PROJECT R's app build.
+- [x] Merge Winlator runtime activities, service, provider, permissions, and internal runtime entry point while preserving PROJECT R application ID.
+- [x] Wire upstream CMake project and arm64-v8a ABI/NDK configuration.
+- [x] Include Winlator's Wine/Box86/Box64/rootfs and graphics/input runtime assets in the APK build configuration.
+- [x] Include Winlator's container lifecycle, X server game surface, on-screen controls, mouse/keyboard, and physical gamepad configuration code.
+- [x] Confirm the full Android/NDK debug APK build in GitHub Actions (run 42207461515; artifact uploaded).
+- [ ] Test initial rootfs setup, create/start/stop containers, logs, and cleanup on the Redmi K50i.
+- [ ] Confirm the Mali-compatible renderer and record actual Vulkan/OpenGL details; never assume Adreno-only Turnip.
+- [ ] Connect PROJECT R game profiles and saved EXE document URIs to Winlator container IDs / shortcut records.
+- [ ] Implement a guided, permission-safe import/copy flow and direct game launch from PROJECT R.
+- [ ] Test touch controls, mouse/keyboard, USB/Bluetooth controller hot-plug and bindings, audio, pause/resume, and lifecycle.
+- [ ] Test IGI 2 installation and gameplay with user-supplied licensed game files; verify rendering, audio, and input.
+- [ ] Decide whether PROJECT R needs a separate, rights-reviewed store/catalog. Do not bundle copyrighted game installers or reuse the unrelated archive's backend/key/catalog.
