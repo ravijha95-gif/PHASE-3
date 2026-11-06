@@ -1,0 +1,6 @@
+{
+  "name": "PROJECT R",
+  "description": "Personal Android launcher and runtime bridge for a Windows PC game compatibility environment.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

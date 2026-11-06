@@ -1,58 +1,31 @@
-# PROJECT R — Phase 3 Preview
+# PROJECT R — Phase 4 (Winlator Host & Reskinned Container Environment)
 
-PROJECT R is a personal Android launcher for a Windows-PC-game compatibility environment.
+PROJECT R is a personal Android launcher and reskinned Winlator host environment for Windows PC games.
 
-## Phase 3 features
+## What's New in Phase 4 (`v0.4.0`)
 
-- Custom PROJECT R target / gaming launcher icon (adaptive and legacy densities).
-- Premium dark gaming interface retained from Phase 2.
-- Game library and game profiles.
-- Import game folders using Android's Storage Access Framework.
-- Select and persist a Windows executable URI for each imported game.
-- Detect the official Winlator Android package (`com.winlator`).
-- Open installed Winlator, or open the official GitHub releases page if it is not installed.
-- Engine Center shows the runtime detection state.
-- GitHub Actions supports Gradle files at repository root or under `project_r/`.
-
-## Important runtime limitation
-
-This milestone adds a **runtime hand-off bridge**, not a bundled/embedded Wine + Box86/Box64 environment. PROJECT R remembers the selected `.exe` document URI, but it cannot yet send that file directly to a specific Winlator container/shortcut. The public Winlator source does not document a stable public intent/API for this hand-off, so the app opens Winlator and the user must select/configure the game inside Winlator.
-
-The next milestone is to fork/port the actual upstream Winlator app source as the runtime host and integrate the PROJECT R UI into it. This requires its native libraries, root filesystem, PRoot setup, runtime assets, build system and third-party licence compliance; it is not a one-file Gradle dependency.
-
-## Upstream source references
-
-- Winlator main project: https://github.com/brunodev85/winlator
-- Winlator Android app source: https://github.com/brunodev85/winlator-app
-- Current app source declares application ID `com.winlator` and LGPL-2.1.
-- Main README credits Wine, Box86/Box64, Mesa, DXVK, VKD3D and other third-party projects.
-
-Pin an exact upstream commit and audit each dependency's licence before integrating or distributing the runtime.
-
-## Redmi K50i target
-
-The device uses a MediaTek Dimensity 8100 and Mali GPU. Do not select Adreno-only Turnip drivers. The eventual runtime port must detect Vulkan/OpenGL capabilities and use a backend compatible with the actual Mali driver. Performance and IGI 2 compatibility must be tested on-device.
+- **Phase 3 Discrepancies Resolved:**
+  - Dual-syncs both `project_r_v2` and `project_r` SharedPreferences stores so Phase 2 and Phase 3 game libraries are seamlessly preserved across upgrades.
+  - Dynamic status indicators across `Home`, `Library`, and `Game Details` reflecting linked `.exe` status, bound Container ID, and active GPU driver.
+  - Proper hardware/gesture `BackHandler` navigation across all detail and XServer session screens.
+- **Winlator Container & `.desktop` Shortcut Architecture:**
+  - Create, configure, and persist isolated Wine x86_64 containers (`files/imagefs/home/xuser/containers/xuser-.wine-<id>/.container`).
+  - Automatic generation of Winlator-compatible `.desktop` shortcut files (`files/imagefs/home/xuser/Desktop/<Game>.desktop`) with per-game resolution, DirectX wrapper, launch arguments, and DirectInput8 profile overrides.
+- **Real-Time Device GPU & Vulkan Capability Inspector (`GpuCapabilityDetector`):**
+  - Queries live `EGL14` / `GLES20` (`GL_RENDERER`, `GL_VENDOR`, `GL_VERSION`), SoC model (`Build.SOC_MODEL`), and Android Vulkan hardware features at startup.
+  - Detects **Mali GPUs** (including **Mali-G610 MC6** on the **Redmi K50i / Dimensity 8100**) and guards against selecting Adreno-only Turnip drivers, recommending **VirGL (Mesa OpenGL)** or **Vortek (System Vulkan)** + **WineD3D / dgVoodoo2 (Direct3D 8)**.
+- **1-Click IGI 2: Covert Strike (Redmi K50i / Mali-G610) Preset:**
+  - Pre-configured container and game shortcut profile tuned for Direct3D 8 rendering, Cortex-A78 performance core affinity (`CPU 4–7`), and `BOX64_DYNAREC_SAFEFLAGS=1`.
+- **Reskinned XServer Session Host & External APK Hand-off:**
+  - Built-in reskinned Winlator XServer `:0` session view with interactive X11 mouse touchpad, customizable IGI 2 WASD + Action overlay, Wine Task Manager, `dxdiag` inspector, and live boot/execution logs.
+  - Direct `com.winlator.XServerDisplayActivity` intent hand-off (`container_id` + `shortcut_path`) when an external Winlator APK (`com.winlator`, `com.winlator.cmod`, `com.winlator.glibc`) is installed.
+- **Third-Party & Open-Source Licence Compliance:**
+  - Built-in Open-Source Notices modal in Settings documenting `Winlator` (LGPL-2.1), `Wine` (LGPL-2.1+), `Box86/Box64` (MIT), `Mesa/VirGL` (MIT), `DXVK` (zlib), `VKD3D` (LGPL-2.1), and `PRoot` (GPL-2.0).
 
 ## Build
-
-Requirements: JDK 17, Android SDK 35, Android Gradle Plugin 8.7.3, Kotlin 2.0.21.
 
 ```bash
 gradle --no-daemon assembleDebug
 ```
 
 APK: `app/build/outputs/apk/debug/app-debug.apk`
-
-## GitHub Actions
-
-The workflow detects a Gradle project at either repository root or `project_r/`. Upload the contents of the `project_r` folder to your repository (or keep the folder nested), then run **Actions → Build PROJECT R APK**.
-
-## Version
-
-- Application ID: `com.projectr.launcher` (unchanged)
-- Version code: 3
-- Version name: 0.3.0
-
-## Licensing
-
-The original PROJECT R launcher files are for this personal project. No Windows game files or third-party runtime binaries are included. If upstream Winlator code or runtime assets are added, retain all applicable source notices, licence texts and obligations. Winlator app source is LGPL-2.1; Wine, Box86/Box64, Mesa, DXVK, VKD3D and other components have their own licences.

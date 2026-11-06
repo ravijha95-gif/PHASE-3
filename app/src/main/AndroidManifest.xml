@@ -1,6 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <queries>
         <package android:name="com.winlator" />
+        <package android:name="com.winlator.cmod" />
+        <package android:name="com.winlator.glibc" />
+        <package android:name="com.winlator.afeimod" />
     </queries>
     <application
         android:allowBackup="true"
