@@ -9,7 +9,7 @@ PROJECT R is an Android launcher being integrated with the open-source Winlator 
 - PROJECT R keeps its existing application ID (`com.projectr.launcher`) and opens Winlator's in-process container UI from Engine / game details.
 - Winlator supplies its existing container setup, touchscreen controls, mouse/keyboard input, and physical-controller configuration screens.
 - PROJECT R still does **not** automatically copy its saved `.exe` URI into a container, create a game shortcut, or launch IGI 2. Configure/import the game inside the embedded Winlator UI for now.
-- The merge has not yet been validated by a successful CI build or on-device run. Do not treat IGI 2 compatibility as confirmed.
+- GitHub Actions has successfully built the merged debug APK (about 174 MB). The first-run rootfs setup and Redmi K50i on-device run are still untested. Do not treat IGI 2 compatibility as confirmed.
 
 The Drive archive `Apk.zip` was inspected and is not the requested runtime source. It contains compiled APK payloads for an unrelated emulator/catalog app, not buildable Winlator/Wine source. It was not included. The audit and port notes are in [`docs/RUNTIME-SOURCE-IMPORT.md`](docs/RUNTIME-SOURCE-IMPORT.md).
 

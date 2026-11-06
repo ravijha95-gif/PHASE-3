@@ -9,7 +9,7 @@
 
 ## Not yet completed or verified
 
-- The combined Android/native build has not yet been confirmed by CI.
+- The combined Android/native debug APK build passed in GitHub Actions run [42207461515](https://github.com/ravijha95-gif/PHASE-3/actions/runs/42207461515). The uploaded artifact is about 174 MB.
 - PROJECT R persists the selected EXE document URI, but does not copy it into a Winlator container, create a Winlator shortcut, or launch that game automatically. Users must use Winlator's UI to configure/import their game.
 - The first-run rootfs install and runtime startup have not been tested on-device.
 - Graphics backend selection for the Redmi K50i's Mali GPU and actual IGI 2 compatibility remain unverified.

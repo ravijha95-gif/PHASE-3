@@ -9,7 +9,7 @@ Status reflects source/build wiring only. The merged APK and runtime must pass C
 - [x] Wire upstream CMake project and arm64-v8a ABI/NDK configuration.
 - [x] Include Winlator's Wine/Box86/Box64/rootfs and graphics/input runtime assets in the APK build configuration.
 - [x] Include Winlator's container lifecycle, X server game surface, on-screen controls, mouse/keyboard, and physical gamepad configuration code.
-- [ ] Confirm the full Android/NDK build in GitHub Actions; resolve any compile or packaging failures.
+- [x] Confirm the full Android/NDK debug APK build in GitHub Actions (run 42207461515; artifact uploaded).
 - [ ] Test initial rootfs setup, create/start/stop containers, logs, and cleanup on the Redmi K50i.
 - [ ] Confirm the Mali-compatible renderer and record actual Vulkan/OpenGL details; never assume Adreno-only Turnip.
 - [ ] Connect PROJECT R game profiles and saved EXE document URIs to Winlator container IDs / shortcut records.

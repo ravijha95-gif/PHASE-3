@@ -32,7 +32,7 @@ git submodule update --init --recursive
 gradle --no-daemon assembleDebug
 ```
 
-The GitHub Actions workflow checks out submodules recursively and installs the pinned NDK/CMake versions. This combined build has not yet been confirmed. First-run rootfs setup, storage needs, graphics, audio, touchscreen controls, and physical controllers also require device validation.
+The GitHub Actions workflow checks out submodules recursively and installs the pinned NDK/CMake versions. The combined debug APK build passed in [run 42207461515](https://github.com/ravijha95-gif/PHASE-3/actions/runs/42207461515); its artifact is about 174 MB. First-run rootfs setup, storage needs, graphics, audio, touchscreen controls, and physical controllers still require device validation.
 
 ## Remaining integration work
 
