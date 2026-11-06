@@ -7,6 +7,7 @@ plugins {
 val winlatorRoot = rootProject.file("runtime/winlator-app/app/src/main")
 val winlatorJavaSource = winlatorRoot.resolve("java")
 val winlatorJavaGenerated = layout.buildDirectory.dir("generated/winlator/java")
+val winlatorResGenerated = layout.buildDirectory.dir("generated/winlator/res")
 val winlatorNoticesGenerated = layout.buildDirectory.dir("generated/winlator/assets")
 
 // Keep upstream source pristine in its pinned submodule. This app uses its own
@@ -26,6 +27,24 @@ val prepareWinlatorJava = tasks.register<Copy>("prepareWinlatorJava") {
     }
 }
 
+val prepareWinlatorResources = tasks.register<Copy>("prepareWinlatorResources") {
+    from(winlatorRoot.resolve("res")) {
+        // Keep PROJECT R's launcher identity; all other Winlator resources remain intact.
+        exclude("mipmap-*/ic_launcher.png", "mipmap-*/ic_launcher_round.png")
+        exclude("mipmap-anydpi-v26/ic_launcher.xml", "mipmap-anydpi-v26/ic_launcher_round.xml")
+    }
+    into(winlatorResGenerated)
+    doLast {
+        val file = winlatorResGenerated.get().file("values/strings.xml").asFile
+        val original = file.readText()
+        val appName = Regex("(?m)^\\s*<string name=\"app_name\">[^<]*</string>\\s*\\n?")
+        check(appName.containsMatchIn(original)) {
+            "Pinned Winlator app_name resource changed; review PROJECT R resource merge."
+        }
+        file.writeText(appName.replace(original, ""))
+    }
+}
+
 val prepareWinlatorNotices = tasks.register<Copy>("prepareWinlatorNotices") {
     from(rootProject.file("runtime/winlator-app/LICENSE")) {
         rename { "WINLATOR-LGPL-2.1.txt" }
@@ -37,7 +56,7 @@ val prepareWinlatorNotices = tasks.register<Copy>("prepareWinlatorNotices") {
 }
 
 tasks.named("preBuild").configure {
-    dependsOn(prepareWinlatorJava, prepareWinlatorNotices)
+    dependsOn(prepareWinlatorJava, prepareWinlatorResources, prepareWinlatorNotices)
 }
 
 android {
@@ -59,7 +78,7 @@ android {
 
     sourceSets.getByName("main").apply {
         java.srcDir(winlatorJavaGenerated)
-        res.srcDir(winlatorRoot.resolve("res"))
+        res.srcDir(winlatorResGenerated)
         assets.srcDir(winlatorRoot.resolve("assets"))
         assets.srcDir(winlatorNoticesGenerated)
         jniLibs.srcDir(winlatorRoot.resolve("jniLibs"))
