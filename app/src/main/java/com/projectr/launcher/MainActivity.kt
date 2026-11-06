@@ -289,7 +289,7 @@ private fun HomeScreen(
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 MetricCard("LIBRARY", games.size.toString(), Icons.Default.SportsEsports, Modifier.weight(1f))
-                MetricCard("ENGINE", "NOT READY", Icons.Default.Memory, Modifier.weight(1f), Orange)
+                MetricCard("ENGINE", "SETUP PENDING", Icons.Default.Memory, Modifier.weight(1f), Orange)
             }
         }
         item {
@@ -423,7 +423,7 @@ private fun EngineTeaser(onClick: () -> Unit) {
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text("COMPATIBILITY ENGINE", color = TextMain, fontSize = 11.sp, fontWeight = FontWeight.Black)
-            Text("Runtime integration is the next milestone.", color = TextMuted, fontSize = 10.sp)
+            Text("Bundled runtime • first-run setup still required.", color = TextMuted, fontSize = 10.sp)
         }
         Icon(Icons.Default.ArrowForward, null, tint = Cyan)
     }
@@ -502,7 +502,7 @@ private fun GameDetailsScreen(
             Icon(Icons.Default.DeleteOutline, null); Spacer(Modifier.width(7.dp)); Text("REMOVE FROM LIBRARY")
         }
         Text(
-            "Phase 3 bridge: PROJECT R can remember the selected executable and open the separately installed Winlator app. It does not yet pass the executable into Winlator or launch it directly.",
+            "PROJECT R opens the bundled Winlator runtime. The saved executable is not yet passed into a Winlator container or launched automatically; configure the game from the runtime UI for now.",
             color = TextMuted, fontSize = 10.sp
         )
     }
@@ -533,17 +533,17 @@ private fun EngineScreen(runtimeInstalled: Boolean, onOpenRuntime: () -> Unit) {
         TopHeader("Engine", "Windows compatibility runtime")
         Spacer(Modifier.height(5.dp))
         Text("RUNTIME CENTER", color = TextMain, fontSize = 23.sp, fontWeight = FontWeight.Black)
-        Text("Upstream Winlator is selected for a host-app port, but its runtime source and native assets are not merged into PROJECT R yet. Until that work and device testing are complete, this app only offers the separate-app hand-off.", color = TextMuted, fontSize = 11.sp)
+        Text("The pinned Winlator host source, native libraries, and runtime assets are now wired into this APK build. First-run root filesystem setup and on-device testing are still pending; PROJECT R does not yet auto-create a container or launch its saved EXE directly.", color = TextMuted, fontSize = 11.sp)
         Row(
             Modifier.fillMaxWidth().clip(RoundedCornerShape(15.dp)).background(Surface1).padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text("WINLATOR APP", color = TextMain, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                Text(if (runtimeInstalled) "Detected on this device" else "Not detected", color = if (runtimeInstalled) Green else Orange, fontSize = 10.sp)
+                Text("WINLATOR RUNTIME", color = TextMain, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text(if (runtimeInstalled) "Bundled • first-run setup required" else "Runtime unavailable", color = if (runtimeInstalled) Orange else Orange, fontSize = 10.sp)
             }
             Button(onClick = onOpenRuntime, colors = ButtonDefaults.buttonColors(containerColor = Cyan, contentColor = Ink)) {
-                Text(if (runtimeInstalled) "OPEN" else "INSTALL", fontSize = 9.sp, fontWeight = FontWeight.Black)
+                Text(if (runtimeInstalled) "OPEN RUNTIME" else "UNAVAILABLE", fontSize = 9.sp, fontWeight = FontWeight.Black)
             }
         }
         Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Brush.linearGradient(listOf(Color(0xFF263A58), Color(0xFF211F3E)))).padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -552,9 +552,9 @@ private fun EngineScreen(runtimeInstalled: Boolean, onOpenRuntime: () -> Unit) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(7.dp).clip(CircleShape).background(Orange))
                 Spacer(Modifier.width(7.dp))
-                Text("NOT INTEGRATED", color = Orange, fontSize = 9.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
+                Text("SOURCE BUNDLED • DEVICE TEST PENDING", color = Orange, fontSize = 9.sp, fontWeight = FontWeight.Black, letterSpacing = .4.sp)
             }
-            Text("Wine • Box86/Box64 • Mesa • PRoot • audio and input services", color = TextMuted, fontSize = 10.sp)
+            Text("Wine • Box86/Box64 • graphics • PRoot • audio • touch controls • gamepad", color = TextMuted, fontSize = 10.sp)
         }
         EngineComponent("Wine", "Windows API compatibility layer", false)
         EngineComponent("Box86 / Box64", "x86 and x64 instruction translation", false)
@@ -564,7 +564,7 @@ private fun EngineScreen(runtimeInstalled: Boolean, onOpenRuntime: () -> Unit) {
         Text("Device target", color = Cyan, fontSize = 9.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
         InfoCard("ANDROID DEVICE", "${Build.MANUFACTURER} ${Build.MODEL} • Android ${Build.VERSION.RELEASE} • ${Build.SUPPORTED_ABIS.firstOrNull() ?: "Unknown ABI"}")
         InfoCard("GRAPHICS NOTE", "This project must detect the actual GPU and Vulkan/OpenGL capabilities at runtime. Do not assume Adreno drivers on Mali devices.")
-        Text("Selected upstream revision: 2c33741d50c5daab0521a098be5c969f63b9e887. Source fetch, licence inventory, host-app merge, and Redmi K50i validation are still pending.", color = TextMuted, fontSize = 10.sp)
+        Text("Pinned Winlator source revision 2c33741d50c5daab0521a098be5c969f63b9e887 is now included as a source submodule. Build and Redmi K50i validation are still pending; game EXE hand-off from PROJECT R remains a follow-up.", color = TextMuted, fontSize = 10.sp)
     }
 }
 
@@ -577,7 +577,7 @@ private fun EngineComponent(name: String, description: String, installed: Boolea
             Text(name, color = TextMain, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             Text(description, color = TextMuted, fontSize = 9.sp)
         }
-        Text(if (installed) "READY" else "PENDING", color = if (installed) Green else Orange, fontSize = 8.sp, fontWeight = FontWeight.Black)
+        Text(if (installed) "TESTED" else "UNVERIFIED", color = if (installed) Green else Orange, fontSize = 8.sp, fontWeight = FontWeight.Black)
     }
 }
 
@@ -587,14 +587,14 @@ private fun SettingsScreen() {
         TopHeader("Settings", "Personalise your gaming setup")
         Spacer(Modifier.height(5.dp))
         Text("PREFERENCES", color = TextMain, fontSize = 23.sp, fontWeight = FontWeight.Black)
-        SettingRow("Application", "PROJECT R • Preview 0.2.0", Icons.Default.Apps)
+        SettingRow("Application", "PROJECT R • Preview 0.4.0", Icons.Default.Apps)
         SettingRow("Game library", "Folders are selected with Android's document picker", Icons.Default.FolderOpen)
-        SettingRow("Compatibility engine", "Winlator runtime integration pending", Icons.Default.Memory)
-        SettingRow("Graphics", "Device-specific backend selection will be added with runtime", Icons.Default.Tune)
-        SettingRow("Controls", "Touch mapping and gamepad support planned", Icons.Default.Gamepad)
+        SettingRow("Compatibility engine", "Winlator runtime bundled • first-run setup required", Icons.Default.Memory)
+        SettingRow("Graphics", "GPU backend needs device validation", Icons.Default.Tune)
+        SettingRow("Controls", "Winlator touchscreen and gamepad settings", Icons.Default.Gamepad)
         SettingRow("Device", "${Build.MANUFACTURER} ${Build.MODEL}", Icons.Default.Smartphone)
         Spacer(Modifier.height(4.dp))
-        Text("PROJECT R IS A PERSONAL PROJECT. GAME FILES, WINDOWS FILES AND THIRD-PARTY RUNTIMES ARE NOT INCLUDED IN THIS BUILD.", color = TextMuted, fontSize = 8.sp, lineHeight = 13.sp, letterSpacing = .5.sp)
+        Text("PROJECT R IS A PERSONAL PROJECT. WINDOWS GAME FILES AND GAME LICENSES ARE NOT INCLUDED. THE BUNDLED WINLATOR COMPONENTS HAVE SEPARATE OPEN-SOURCE LICENSES.", color = TextMuted, fontSize = 8.sp, lineHeight = 13.sp, letterSpacing = .5.sp)
     }
 }
 

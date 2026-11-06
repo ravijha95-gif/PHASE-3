@@ -1,33 +1,31 @@
-# PROJECT R — Phase 3: Runtime bridge
+# PROJECT R — Runtime integration status
 
-## Included in this phase
+## What is wired into the app
 
-1. Custom PROJECT R launcher icon (adaptive and legacy density assets).
-2. Android package visibility for the official Winlator package (`com.winlator`).
-3. Runtime detection using Android's package manager.
-4. Open installed Winlator, or open the official Winlator GitHub releases page if it is absent.
-5. Link a Windows executable document URI to an imported game profile.
-6. Persist the executable URI and its Android read permission.
-7. Preserve the Phase 2 app ID and `project_r_v2` preference store so existing library data is retained during an in-place upgrade.
+- PROJECT R source has the Winlator app source as a pinned submodule at `runtime/winlator-app` (`2c33741d50c5daab0521a098be5c969f63b9e887`).
+- The PROJECT R Android application build is configured to consume the upstream Java source, resources, runtime assets, arm64 JNI libraries, and native CMake project.
+- The app retains its application ID `com.projectr.launcher`. Winlator's own `MainActivity` is an internal Activity and the Engine / game-details actions open it from the same APK.
+- Winlator's own UI provides container creation, rootfs initialization, touchscreen control editing, and physical game-controller bindings.
 
-## Critical limitation
+## Not yet completed or verified
 
-This is an **external runtime bridge**, not an embedded Winlator runtime. The selected executable URI is saved in PROJECT R, but the current public Winlator app source does not document a stable public Android intent/API for receiving a document URI and starting a specific container shortcut. Therefore PROJECT R does not pretend to auto-launch the selected EXE. The user opens Winlator and selects/configures the game there.
+- The combined Android/native build has not yet been confirmed by CI.
+- PROJECT R persists the selected EXE document URI, but does not copy it into a Winlator container, create a Winlator shortcut, or launch that game automatically. Users must use Winlator's UI to configure/import their game.
+- The first-run rootfs install and runtime startup have not been tested on-device.
+- Graphics backend selection for the Redmi K50i's Mali GPU and actual IGI 2 compatibility remain unverified.
+- Complete third-party licence/notice review and in-app notices remain required before redistributing builds.
 
-## Verified upstream facts
+## Build prerequisites
 
-The upstream `winlator-app` Android application declares:
-- Namespace/application ID: `com.winlator`
-- `minSdkVersion 26`
-- `targetSdkVersion 28`
-- `versionName 11.2` in the current source snapshot inspected for this phase.
+Initialize the submodule before running Gradle locally:
 
-The app repository identifies its license as LGPL-2.1 and describes itself as the Android application source. The main Winlator repository documents its runtime components and third-party credits. Pin a specific upstream commit before any embedded fork/port.
+```bash
+git submodule update --init --recursive
+gradle --no-daemon assembleDebug
+```
 
-## Next step for a true in-process runtime
+The runtime app currently targets Android API 28 / min API 26, uses NDK `24.0.8215888`, and requires CMake `3.22.1`. The CI workflow initializes the submodule and installs this native toolchain.
 
-The correct long-term route is to fork/port the Winlator application source as the runtime host and merge PROJECT R's UI into that application, preserving the upstream runtime lifecycle, native library packaging, root filesystem assets, setup scripts and all third-party notices. Simply adding Wine or Box86 as a Maven dependency is not sufficient.
+## User-provided archive
 
-## Redmi K50i
-
-The Redmi K50i uses a MediaTek Dimensity platform with Mali graphics. Do not force Adreno-only Turnip components. Query Vulkan/OpenGL capabilities on-device and select a supported Mali-compatible backend. Actual IGI 2 rendering must be validated on the handset.
+The Drive `Apk.zip` is a compiled APK payload for an unrelated emulator/catalog app, not Winlator source. It was inspected but is not included. See [`RUNTIME-SOURCE-IMPORT.md`](RUNTIME-SOURCE-IMPORT.md) for details.
