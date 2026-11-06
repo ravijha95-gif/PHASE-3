@@ -533,7 +533,7 @@ private fun EngineScreen(runtimeInstalled: Boolean, onOpenRuntime: () -> Unit) {
         TopHeader("Engine", "Windows compatibility runtime")
         Spacer(Modifier.height(5.dp))
         Text("RUNTIME CENTER", color = TextMain, fontSize = 23.sp, fontWeight = FontWeight.Black)
-        Text("Phase 3 adds runtime detection and a hand-off to the official Winlator app. A fully embedded runtime still requires the upstream source and native assets.", color = TextMuted, fontSize = 11.sp)
+        Text("Upstream Winlator is selected for a host-app port, but its runtime source and native assets are not merged into PROJECT R yet. Until that work and device testing are complete, this app only offers the separate-app hand-off.", color = TextMuted, fontSize = 11.sp)
         Row(
             Modifier.fillMaxWidth().clip(RoundedCornerShape(15.dp)).background(Surface1).padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -564,7 +564,7 @@ private fun EngineScreen(runtimeInstalled: Boolean, onOpenRuntime: () -> Unit) {
         Text("Device target", color = Cyan, fontSize = 9.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
         InfoCard("ANDROID DEVICE", "${Build.MANUFACTURER} ${Build.MODEL} • Android ${Build.VERSION.RELEASE} • ${Build.SUPPORTED_ABIS.firstOrNull() ?: "Unknown ABI"}")
         InfoCard("GRAPHICS NOTE", "This project must detect the actual GPU and Vulkan/OpenGL capabilities at runtime. Do not assume Adreno drivers on Mali devices.")
-        Text("The next integration task is to port the upstream Winlator runtime and its native assets, then connect this launcher to its container and shortcut services.", color = TextMuted, fontSize = 10.sp)
+        Text("Selected upstream revision: 2c33741d50c5daab0521a098be5c969f63b9e887. Source fetch, licence inventory, host-app merge, and Redmi K50i validation are still pending.", color = TextMuted, fontSize = 10.sp)
     }
 }
 

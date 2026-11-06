@@ -18,7 +18,9 @@ PROJECT R is a personal Android launcher for a Windows-PC-game compatibility env
 
 This milestone adds a **runtime hand-off bridge**, not a bundled/embedded Wine + Box86/Box64 environment. PROJECT R remembers the selected `.exe` document URI, but it cannot yet send that file directly to a specific Winlator container/shortcut. The public Winlator source does not document a stable public intent/API for this hand-off, so the app opens Winlator and the user must select/configure the game inside Winlator.
 
-The next milestone is to fork/port the actual upstream Winlator app source as the runtime host and integrate the PROJECT R UI into it. This requires its native libraries, root filesystem, PRoot setup, runtime assets, build system and third-party licence compliance; it is not a one-file Gradle dependency.
+The selected next milestone is to port the upstream Winlator app as the runtime host and integrate the PROJECT R UI into it. The source is pinned in the runtime integration plan to `brunodev85/winlator-app` commit `2c33741d50c5daab0521a098be5c969f63b9e887`. This requires its native libraries, root filesystem, PRoot setup, runtime assets, build system and third-party licence compliance; it is not a one-file Gradle dependency. No Winlator runtime code or assets are bundled in this preview yet.
+
+The user-provided Drive archive `Apk.zip` was inspected but is not that source: it contains compiled APK payloads for a different emulator/catalog product, with no Gradle/Kotlin/Java source and no Wine/Box86/Box64 runtime. It has not been copied into this repository. See [`docs/RUNTIME-SOURCE-IMPORT.md`](docs/RUNTIME-SOURCE-IMPORT.md) for the audit and next steps. The integration checklist also covers the on-screen keyboard/mouse, physical controller mapping, and safe store/catalog scope.
 
 ## Upstream source references
 
