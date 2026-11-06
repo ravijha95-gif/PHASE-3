@@ -61,7 +61,18 @@ jobs:
         shell: bash
         run: |
           cd "$PROJECT_DIR"
-          gradle --no-daemon assembleDebug
+          set -o pipefail
+          gradle --no-daemon assembleDebug 2>&1 | tee "$RUNNER_TEMP/gradle-build.log"
+
+      - name: Surface Gradle failure details
+        if: failure()
+        shell: bash
+        run: |
+          LOG="$RUNNER_TEMP/gradle-build.log"
+          if [ -f "$LOG" ]; then
+            DETAILS="$(tail -n 45 "$LOG" | sed 's/%/%25/g; s/\r/%0D/g' | awk '{ if (NR > 1) printf "%%0A"; printf "%s", $0 }')"
+            echo "::error title=Gradle build failure details::$DETAILS"
+          fi
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
