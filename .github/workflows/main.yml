@@ -25,11 +25,19 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Install pinned native toolchain
-        run: sdkmanager "ndk;24.0.8215888" "cmake;3.22.1"
+        shell: bash
+        run: |
+          SDKMANAGER="$(command -v sdkmanager || true)"
+          if [ -z "$SDKMANAGER" ] && [ -n "${ANDROID_HOME:-}" ]; then
+            SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager -print -quit 2>/dev/null || true)"
+          fi
+          if [ -z "$SDKMANAGER" ]; then
+            echo "Android SDK command-line tools were not found on this runner."
+            echo "ANDROID_HOME=${ANDROID_HOME:-unset} ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-unset}"
+            exit 1
+          fi
+          "$SDKMANAGER" --install "ndk;24.0.8215888" "cmake;3.22.1"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
