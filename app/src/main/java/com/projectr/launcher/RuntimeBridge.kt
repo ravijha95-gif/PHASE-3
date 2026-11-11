@@ -4,6 +4,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import com.winlator.MainActivity as BundledWinlatorActivity
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -26,7 +27,7 @@ object RuntimeBridge {
     )
     private const val XSERVER_ACTIVITY = "com.winlator.XServerDisplayActivity"
     private const val RELEASES_URL = "https://github.com/brunodev85/winlator/releases"
-    const val PINNED_UPSTREAM_REF = "brunodev85/winlator-app @ v11.2 (LGPL-2.1)"
+    const val PINNED_UPSTREAM_REF = "brunodev85/winlator-app @ 2c33741d50c5daab0521a098be5c969f63b9e887 (LGPL-2.1)"
 
     fun detectInstalledPackage(context: Context): String? {
         val pm = context.packageManager
@@ -39,23 +40,32 @@ object RuntimeBridge {
         return detectInstalledPackage(context) != null
     }
 
+    /** Opens the runtime bundled in this APK; external package hand-off remains optional. */
     fun openOrInstall(context: Context): String {
-        val pkg = detectInstalledPackage(context)
-        return if (pkg != null) {
-            val launchIntent = context.packageManager.getLaunchIntentForPackage(pkg)
-            if (launchIntent != null) {
-                launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                context.startActivity(launchIntent)
-                "Opened external runtime ($pkg)."
+        return try {
+            context.startActivity(
+                Intent(context, BundledWinlatorActivity::class.java)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
+            "Opened the bundled Winlator runtime. Complete first-run setup and create a container before launching games."
+        } catch (error: Exception) {
+            val pkg = detectInstalledPackage(context)
+            if (pkg != null) {
+                val launchIntent = context.packageManager.getLaunchIntentForPackage(pkg)
+                if (launchIntent != null) {
+                    launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    context.startActivity(launchIntent)
+                    "Bundled runtime could not open; opened external runtime ($pkg)."
+                } else {
+                    "Bundled runtime could not open and $pkg has no launch activity. ${error.message.orEmpty()}"
+                }
             } else {
-                "Runtime package $pkg detected, but no launch activity is exported."
+                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(RELEASES_URL)).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(browserIntent)
+                "Bundled runtime could not open. Opening official Winlator releases page. ${error.message.orEmpty()}"
             }
-        } else {
-            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(RELEASES_URL)).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            context.startActivity(browserIntent)
-            "External Winlator APK not detected. Opening official Winlator releases page."
         }
     }
 

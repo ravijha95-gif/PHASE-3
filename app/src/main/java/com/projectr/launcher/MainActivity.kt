@@ -9,6 +9,10 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -115,6 +119,11 @@ class MainActivity : ComponentActivity() {
             var editingShortcutGame by remember { mutableStateOf<GameEntry?>(null) }
             var showLicencesDialog by remember { mutableStateOf(false) }
             var toastMessage by remember { mutableStateOf<String?>(null) }
+            var bundledContainerChoices by remember { mutableStateOf<List<WinlatorGameLauncher.ContainerOption>>(emptyList()) }
+            var pendingBundledGame by remember { mutableStateOf<GameEntry?>(null) }
+            var bundledLaunchError by remember { mutableStateOf<String?>(null) }
+            var bundledLaunchNeedsSetup by remember { mutableStateOf(false) }
+            var preparingBundledGame by remember { mutableStateOf(false) }
 
             val externalInstalled = RuntimeBridge.isInstalled(this@MainActivity)
             val detectedPkg = RuntimeBridge.detectInstalledPackage(this@MainActivity)
@@ -127,6 +136,49 @@ class MainActivity : ComponentActivity() {
             fun persistContainers(updated: List<WinlatorContainer>) {
                 repository.saveContainers(updated)
                 containers = repository.loadContainers()
+            }
+
+            fun launchGameInBundledContainer(game: GameEntry, containerId: Int) {
+                pendingBundledGame = null
+                preparingBundledGame = true
+                lifecycleScope.launch {
+                    try {
+                        val intent = withContext(Dispatchers.IO) {
+                            WinlatorGameLauncher.prepareLaunch(this@MainActivity, game, containerId)
+                        }
+                        preparingBundledGame = false
+                        startActivity(intent)
+                    } catch (error: Exception) {
+                        preparingBundledGame = false
+                        bundledLaunchNeedsSetup = false
+                        bundledLaunchError = error.message ?: "The game could not be prepared for the bundled runtime."
+                    }
+                }
+            }
+
+            fun requestBundledGameLaunch(game: GameEntry) {
+                if (game.exeUri.isNullOrBlank()) {
+                    bundledLaunchNeedsSetup = false
+                    bundledLaunchError = "Link the game's EXE first. Choose an EXE from inside the imported folder so its data files can be copied with it."
+                    return
+                }
+                if (!WinlatorGameLauncher.isRuntimeReady(this@MainActivity)) {
+                    bundledLaunchNeedsSetup = true
+                    bundledLaunchError = "The bundled Winlator runtime has not completed its first-run setup. Open it, wait for the root filesystem setup, and create a container."
+                    return
+                }
+                val options = runCatching {
+                    WinlatorGameLauncher.listContainers(this@MainActivity)
+                }.getOrDefault(emptyList())
+                if (options.isEmpty()) {
+                    bundledLaunchNeedsSetup = true
+                    bundledLaunchError = "Create and initialize a container in the bundled Winlator runtime before launching this game."
+                } else if (options.size == 1) {
+                    launchGameInBundledContainer(game, options.first().id)
+                } else {
+                    bundledContainerChoices = options
+                    pendingBundledGame = game
+                }
             }
 
             onFolderPicked = { uri, name ->
@@ -225,7 +277,8 @@ class MainActivity : ComponentActivity() {
                                         game,
                                         boundContainer
                                     )
-                                }
+                                },
+                                onLaunchBundledRuntime = { requestBundledGameLaunch(game) }
                             )
                         }
 
@@ -388,6 +441,54 @@ class MainActivity : ComponentActivity() {
 
                     if (showLicencesDialog) {
                         OpenSourceNoticesDialog(onDismiss = { showLicencesDialog = false })
+                    }
+
+                    if (pendingBundledGame != null) {
+                        AlertDialog(
+                            onDismissRequest = { pendingBundledGame = null },
+                            title = { Text("Choose bundled Winlator container", color = TextMain) },
+                            text = {
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    bundledContainerChoices.forEach { option ->
+                                        OutlinedButton(
+                                            onClick = { launchGameInBundledContainer(pendingBundledGame!!, option.id) },
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) { Text(option.name, color = TextMain) }
+                                    }
+                                }
+                            },
+                            confirmButton = {},
+                            dismissButton = { TextButton(onClick = { pendingBundledGame = null }) { Text("CANCEL") } },
+                            containerColor = Surface2
+                        )
+                    }
+
+                    if (bundledLaunchError != null) {
+                        AlertDialog(
+                            onDismissRequest = { bundledLaunchError = null },
+                            title = { Text(if (bundledLaunchNeedsSetup) "Prepare Winlator" else "Can't launch game", color = TextMain) },
+                            text = { Text(bundledLaunchError.orEmpty(), color = TextMuted) },
+                            confirmButton = {
+                                TextButton(onClick = {
+                                    val openRuntime = bundledLaunchNeedsSetup
+                                    bundledLaunchError = null
+                                    if (openRuntime) toastMessage = RuntimeBridge.openOrInstall(this@MainActivity)
+                                }) {
+                                    Text(if (bundledLaunchNeedsSetup) "OPEN WINLATOR" else "GOT IT", color = Cyan)
+                                }
+                            },
+                            containerColor = Surface2
+                        )
+                    }
+
+                    if (preparingBundledGame) {
+                        AlertDialog(
+                            onDismissRequest = {},
+                            title = { Text("Preparing game", color = TextMain) },
+                            text = { Text("Copying the imported game folder into the selected Winlator container. Large games may take several minutes.", color = TextMuted) },
+                            confirmButton = {},
+                            containerColor = Surface2
+                        )
                     }
                 }
             }
@@ -836,7 +937,8 @@ private fun GameDetailsScreen(
     onRemove: () -> Unit,
     onChooseExecutable: () -> Unit,
     onLaunchXServerSession: () -> Unit,
-    onOpenExternalRuntime: () -> Unit
+    onOpenExternalRuntime: () -> Unit,
+    onLaunchBundledRuntime: () -> Unit
 ) {
     BackHandler { onBack() }
 
@@ -867,7 +969,7 @@ private fun GameDetailsScreen(
             } else {
                 "Imported folder • Link a Windows .exe to enable direct container boot"
             },
-            buttonText = "LAUNCH IN PROJECT R XSERVER",
+            buttonText = "OPEN PHASE 4 SESSION VIEW",
             onClick = onLaunchXServerSession
         )
 
@@ -884,7 +986,7 @@ private fun GameDetailsScreen(
         )
         StatusLine(
             "EXTERNAL WINLATOR APK",
-            if (runtimeInstalled) "Installed (Direct XServerDisplayActivity hand-off ready)" else "Not installed (Using built-in PROJECT R XServer Host)",
+            if (runtimeInstalled) "External APK detected; bundled runtime is also available" else "Bundled Winlator runtime available; no separate APK detected",
             if (runtimeInstalled) Green else Cyan
         )
 
@@ -903,7 +1005,7 @@ private fun GameDetailsScreen(
         ) {
             Icon(Icons.Default.PlayArrow, contentDescription = null)
             Spacer(Modifier.width(8.dp))
-            Text("BOOT CONTAINER IN PROJECT R HOST", fontWeight = FontWeight.Black)
+            Text("OPEN PHASE 4 SESSION VIEW", fontWeight = FontWeight.Black)
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -917,6 +1019,18 @@ private fun GameDetailsScreen(
                 Spacer(Modifier.width(6.dp))
                 Text("SHORTCUT CONFIG", fontSize = 10.sp, fontWeight = FontWeight.Bold)
             }
+        }
+
+        Button(
+            onClick = onLaunchBundledRuntime,
+            enabled = hasExe,
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Green, contentColor = Ink),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Icon(Icons.Default.PlayArrow, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+            Text("LAUNCH GAME IN BUNDLED WINLATOR", fontWeight = FontWeight.Black)
         }
 
         OutlinedButton(
@@ -1065,14 +1179,12 @@ private fun EngineScreen(
             "Recommended Driver: ${gpuReport.recommendedDriver}\nRecommended DirectX/D3D8 Layer: ${gpuReport.recommendedDxWrapper}\n${gpuReport.turnipBlockedReason ?: "Adreno Turnip driver supported on this GPU."}"
         )
 
-        // Subsystems Checklist
-        Text("WINLATOR SUBSYSTEMS", color = Cyan, fontSize = 9.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
-        EngineComponent("Container & Shortcut Manager", "Isolated .wine prefixes & .desktop launchers (${containers.size} active)", true)
-        EngineComponent("XServer :0 & Touch Input HUD", "Reskinned XServer viewport, mouse touchpad & IGI 2 overlay", true)
-        EngineComponent("Mali-G610 / VirGL & Vortek Backend", "Auto-detects ${gpuReport.glRenderer} and guards against Adreno-only Turnip", true)
-        EngineComponent("Box64 / Wine 9.2 Prefix Layout", if (rootFsArchive != null) "Linked archive: $rootFsArchive" else "Prefix directories initialized (Link main.obb for full native guest binaries)", true)
+        Text("RUNTIME COMPONENTS", color = Cyan, fontSize = 9.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
+        EngineComponent("Bundled upstream Winlator runtime", "Pinned source: ${RuntimeBridge.PINNED_UPSTREAM_REF}", true)
+        EngineComponent("Phase 4 profile & GPU tools", "PROJECT R container profiles and ${gpuReport.glRenderer} hardware inspection", true)
+        EngineComponent("Runtime initialization", if (rootFsArchive != null) "Optional archive linked: $rootFsArchive" else "Open Winlator, finish first-run setup, then create a runtime container", false)
 
-        // External Winlator APK Bridge Row
+        // Optional external Winlator APK row
         Row(
             Modifier
                 .fillMaxWidth()
@@ -1082,7 +1194,7 @@ private fun EngineScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text("EXTERNAL WINLATOR APK BRIDGE", color = TextMain, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text("OPTIONAL EXTERNAL WINLATOR APK", color = TextMain, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 Text(
                     if (runtimeInstalled) "Detected package: $detectedPkg" else "External APK not installed (Optional)",
                     color = if (runtimeInstalled) Green else TextMuted,
@@ -1093,7 +1205,7 @@ private fun EngineScreen(
                 onClick = onOpenRuntime,
                 colors = ButtonDefaults.buttonColors(containerColor = Cyan, contentColor = Ink)
             ) {
-                Text(if (runtimeInstalled) "OPEN" else "GET APK", fontSize = 9.sp, fontWeight = FontWeight.Black)
+                Text("OPEN BUNDLED", fontSize = 9.sp, fontWeight = FontWeight.Black)
             }
         }
     }

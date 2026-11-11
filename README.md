@@ -1,31 +1,30 @@
-# PROJECT R — Phase 4 (Winlator Host & Reskinned Container Environment)
+# PROJECT R — Phase 4 + embedded Winlator runtime
 
-PROJECT R is a personal Android launcher and reskinned Winlator host environment for Windows PC games.
+PROJECT R is an Android launcher with the Phase 4 game-library, container-profile, and GPU-inspector UI, plus the pinned upstream Winlator app/runtime embedded in the APK.
 
-## What's New in Phase 4 (`v0.4.0`)
+## Phase 4 interface
 
-- **Phase 3 Discrepancies Resolved:**
-  - Dual-syncs both `project_r_v2` and `project_r` SharedPreferences stores so Phase 2 and Phase 3 game libraries are seamlessly preserved across upgrades.
-  - Dynamic status indicators across `Home`, `Library`, and `Game Details` reflecting linked `.exe` status, bound Container ID, and active GPU driver.
-  - Proper hardware/gesture `BackHandler` navigation across all detail and XServer session screens.
-- **Winlator Container & `.desktop` Shortcut Architecture:**
-  - Create, configure, and persist isolated Wine x86_64 containers (`files/imagefs/home/xuser/containers/xuser-.wine-<id>/.container`).
-  - Automatic generation of Winlator-compatible `.desktop` shortcut files (`files/imagefs/home/xuser/Desktop/<Game>.desktop`) with per-game resolution, DirectX wrapper, launch arguments, and DirectInput8 profile overrides.
-- **Real-Time Device GPU & Vulkan Capability Inspector (`GpuCapabilityDetector`):**
-  - Queries live `EGL14` / `GLES20` (`GL_RENDERER`, `GL_VENDOR`, `GL_VERSION`), SoC model (`Build.SOC_MODEL`), and Android Vulkan hardware features at startup.
-  - Detects **Mali GPUs** (including **Mali-G610 MC6** on the **Redmi K50i / Dimensity 8100**) and guards against selecting Adreno-only Turnip drivers, recommending **VirGL (Mesa OpenGL)** or **Vortek (System Vulkan)** + **WineD3D / dgVoodoo2 (Direct3D 8)**.
-- **1-Click IGI 2: Covert Strike (Redmi K50i / Mali-G610) Preset:**
-  - Pre-configured container and game shortcut profile tuned for Direct3D 8 rendering, Cortex-A78 performance core affinity (`CPU 4–7`), and `BOX64_DYNAREC_SAFEFLAGS=1`.
-- **Reskinned XServer Session Host & External APK Hand-off:**
-  - Built-in reskinned Winlator XServer `:0` session view with interactive X11 mouse touchpad, customizable IGI 2 WASD + Action overlay, Wine Task Manager, `dxdiag` inspector, and live boot/execution logs.
-  - Direct `com.winlator.XServerDisplayActivity` intent hand-off (`container_id` + `shortcut_path`) when an external Winlator APK (`com.winlator`, `com.winlator.cmod`, `com.winlator.glibc`) is installed.
-- **Third-Party & Open-Source Licence Compliance:**
-  - Built-in Open-Source Notices modal in Settings documenting `Winlator` (LGPL-2.1), `Wine` (LGPL-2.1+), `Box86/Box64` (MIT), `Mesa/VirGL` (MIT), `DXVK` (zlib), `VKD3D` (LGPL-2.1), and `PRoot` (GPL-2.0).
+- Preserves the Phase 4 library, settings, controller-profile, GPU-inspector, and shortcut-configuration screens.
+- Includes the IGI 2: Covert Strike profile preset and Mali/Turnip warning logic.
+- Keeps the existing PROJECT R application ID and UI.
+
+The Phase 4 profile editor and XServer session presentation are PROJECT R UI layers; actual Windows execution is provided by the embedded upstream Winlator runtime, not by the UI simulation itself.
+
+## Embedded runtime and game launch
+
+- Winlator app source is pinned as a submodule at `runtime/winlator-app`, commit `2c33741d50c5daab0521a098be5c969f63b9e887`.
+- The APK build includes its Java source, resources, runtime assets, arm64 native libraries, and CMake project.
+- Open **Engine → Open Runtime**, complete first-run root filesystem setup, and create/initialize a container in Winlator.
+- In a game's details, link an EXE located inside its imported game folder and tap **LAUNCH GAME IN BUNDLED WINLATOR**. PROJECT R copies the folder into the selected Winlator container and starts the EXE using Winlator's `exec_path` handoff.
+- The direct launch path is newly integrated and still needs a clean CI build and device validation. It does not automate installer dialogs or choose a game-specific graphics profile. IGI 2 gameplay compatibility is not yet confirmed.
+
+See [`docs/IGI2-LAUNCH.md`](docs/IGI2-LAUNCH.md) for setup, launch steps, and limitations. The unrelated Drive `Apk.zip` was inspected only as a reference and is not bundled.
 
 ## Build
 
 ```bash
+git submodule update --init --recursive
 gradle --no-daemon assembleDebug
 ```
 
-APK: `app/build/outputs/apk/debug/app-debug.apk`
+The Android build uses JDK 17, Android SDK 35, NDK `24.0.8215888`, and CMake `3.22.1`. The resulting debug APK is at `app/build/outputs/apk/debug/app-debug.apk`.

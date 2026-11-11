@@ -1,33 +1,27 @@
-# PROJECT R — Phase 3: Runtime bridge
+# PROJECT R — Phase 4 and embedded Winlator integration
 
-## Included in this phase
+## Integrated components
 
-1. Custom PROJECT R launcher icon (adaptive and legacy density assets).
-2. Android package visibility for the official Winlator package (`com.winlator`).
-3. Runtime detection using Android's package manager.
-4. Open installed Winlator, or open the official Winlator GitHub releases page if it is absent.
-5. Link a Windows executable document URI to an imported game profile.
-6. Persist the executable URI and its Android read permission.
-7. Preserve the Phase 2 app ID and `project_r_v2` preference store so existing library data is retained during an in-place upgrade.
+- Phase 4 library, profile, GPU-inspector, and settings screens are retained.
+- Upstream Winlator app source is pinned at `runtime/winlator-app` commit `2c33741d50c5daab0521a098be5c969f63b9e887`.
+- The Android build includes upstream Java, resources, runtime assets, arm64 JNI libraries, and native CMake sources. PROJECT R keeps application ID `com.projectr.launcher`; Winlator's host and XServer activities are internal routes in the same APK.
+- Engine opens the bundled Winlator host; external Winlator APK detection and dispatch remain optional.
+- Game details can copy a SAF-imported directory into a real Winlator container and pass the copied EXE to XServer via `exec_path`.
+- PROJECT R's Phase 4 profile editor/session presentation remains a separate UI layer; it should not be confused with the actual container managed by Winlator.
 
-## Critical limitation
+## Validation status
 
-This is an **external runtime bridge**, not an embedded Winlator runtime. The selected executable URI is saved in PROJECT R, but the current public Winlator app source does not document a stable public Android intent/API for receiving a document URI and starting a specific container shortcut. Therefore PROJECT R does not pretend to auto-launch the selected EXE. The user opens Winlator and selects/configures the game there.
+The upstream integration had a successful CI build before the Phase 4 reconciliation. **The combined Phase 4 + runtime merge has not yet been built or tested.** The first-run rootfs setup, real container creation, selected-EXE handoff, Redmi K50i/Mali graphics behavior, and IGI 2 gameplay all remain unverified. Direct launch does not automate installer prompts or set a game-specific Winlator profile.
 
-## Verified upstream facts
+## Build
 
-The upstream `winlator-app` Android application declares:
-- Namespace/application ID: `com.winlator`
-- `minSdkVersion 26`
-- `targetSdkVersion 28`
-- `versionName 11.2` in the current source snapshot inspected for this phase.
+```bash
+git submodule update --init --recursive
+gradle --no-daemon assembleDebug
+```
 
-The app repository identifies its license as LGPL-2.1 and describes itself as the Android application source. The main Winlator repository documents its runtime components and third-party credits. Pin a specific upstream commit before any embedded fork/port.
+The build targets min API 26 / target API 28 and uses NDK `24.0.8215888` plus CMake `3.22.1`. CI initializes the submodule and installs the native toolchain.
 
-## Next step for a true in-process runtime
+## User-provided archive
 
-The correct long-term route is to fork/port the Winlator application source as the runtime host and merge PROJECT R's UI into that application, preserving the upstream runtime lifecycle, native library packaging, root filesystem assets, setup scripts and all third-party notices. Simply adding Wine or Box86 as a Maven dependency is not sufficient.
-
-## Redmi K50i
-
-The Redmi K50i uses a MediaTek Dimensity platform with Mali graphics. Do not force Adreno-only Turnip components. Query Vulkan/OpenGL capabilities on-device and select a supported Mali-compatible backend. Actual IGI 2 rendering must be validated on the handset.
+The Drive `Apk.zip` was inspected as an unrelated compiled emulator/catalog payload, not source for a Windows runtime. It is not included. See [`RUNTIME-SOURCE-IMPORT.md`](RUNTIME-SOURCE-IMPORT.md).
