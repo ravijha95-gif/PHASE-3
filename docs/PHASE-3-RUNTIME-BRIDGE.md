@@ -1,31 +1,27 @@
-# PROJECT R — Runtime integration status
+# PROJECT R — Phase 4 and embedded Winlator integration
 
-## What is wired into the app
+## Integrated components
 
-- PROJECT R source has the Winlator app source as a pinned submodule at `runtime/winlator-app` (`2c33741d50c5daab0521a098be5c969f63b9e887`).
-- The PROJECT R Android application build is configured to consume the upstream Java source, resources, runtime assets, arm64 JNI libraries, and native CMake project.
-- The app retains its application ID `com.projectr.launcher`. Winlator's own `MainActivity` is an internal Activity and the Engine / game-details actions open it from the same APK.
-- Winlator's own UI provides container creation, rootfs initialization, touchscreen control editing, and physical game-controller bindings.
+- Phase 4 library, profile, GPU-inspector, and settings screens are retained.
+- Upstream Winlator app source is pinned at `runtime/winlator-app` commit `2c33741d50c5daab0521a098be5c969f63b9e887`.
+- The Android build includes upstream Java, resources, runtime assets, arm64 JNI libraries, and native CMake sources. PROJECT R keeps application ID `com.projectr.launcher`; Winlator's host and XServer activities are internal routes in the same APK.
+- Engine opens the bundled Winlator host; external Winlator APK detection and dispatch remain optional.
+- Game details can copy a SAF-imported directory into a real Winlator container and pass the copied EXE to XServer via `exec_path`.
+- PROJECT R's Phase 4 profile editor/session presentation remains a separate UI layer; it should not be confused with the actual container managed by Winlator.
 
-## Not yet completed or verified
+## Validation status
 
-- The combined Android/native debug APK build passed in GitHub Actions run [42207461515](https://github.com/ravijha95-gif/PHASE-3/actions/runs/42207461515). The uploaded artifact is about 174 MB.
-- PROJECT R persists the selected EXE document URI, but does not copy it into a Winlator container, create a Winlator shortcut, or launch that game automatically. Users must use Winlator's UI to configure/import their game.
-- The first-run rootfs install and runtime startup have not been tested on-device.
-- Graphics backend selection for the Redmi K50i's Mali GPU and actual IGI 2 compatibility remain unverified.
-- Complete third-party licence/notice review and in-app notices remain required before redistributing builds.
+The upstream integration had a successful CI build before the Phase 4 reconciliation. **The combined Phase 4 + runtime merge has not yet been built or tested.** The first-run rootfs setup, real container creation, selected-EXE handoff, Redmi K50i/Mali graphics behavior, and IGI 2 gameplay all remain unverified. Direct launch does not automate installer prompts or set a game-specific Winlator profile.
 
-## Build prerequisites
-
-Initialize the submodule before running Gradle locally:
+## Build
 
 ```bash
 git submodule update --init --recursive
 gradle --no-daemon assembleDebug
 ```
 
-The runtime app currently targets Android API 28 / min API 26, uses NDK `24.0.8215888`, and requires CMake `3.22.1`. The CI workflow initializes the submodule and installs this native toolchain.
+The build targets min API 26 / target API 28 and uses NDK `24.0.8215888` plus CMake `3.22.1`. CI initializes the submodule and installs the native toolchain.
 
 ## User-provided archive
 
-The Drive `Apk.zip` is a compiled APK payload for an unrelated emulator/catalog app, not Winlator source. It was inspected but is not included. See [`RUNTIME-SOURCE-IMPORT.md`](RUNTIME-SOURCE-IMPORT.md) for details.
+The Drive `Apk.zip` was inspected as an unrelated compiled emulator/catalog payload, not source for a Windows runtime. It is not included. See [`RUNTIME-SOURCE-IMPORT.md`](RUNTIME-SOURCE-IMPORT.md).

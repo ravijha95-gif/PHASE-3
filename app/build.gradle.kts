@@ -10,9 +10,8 @@ val winlatorJavaGenerated = layout.buildDirectory.dir("generated/winlator/java")
 val winlatorResGenerated = layout.buildDirectory.dir("generated/winlator/res")
 val winlatorNoticesGenerated = layout.buildDirectory.dir("generated/winlator/assets")
 
-// Keep upstream source pristine in its pinned submodule. This app uses its own
-// applicationId, so adapt Winlator's one hard-coded FileProvider authority in
-// a generated build copy rather than editing upstream files in-place.
+// Keep upstream source pristine. Patch the provider authority in a generated copy because
+// the embedded runtime shares PROJECT R's applicationId rather than com.winlator.
 val prepareWinlatorJava = tasks.register<Copy>("prepareWinlatorJava") {
     from(winlatorJavaSource)
     into(winlatorJavaGenerated)
@@ -29,7 +28,6 @@ val prepareWinlatorJava = tasks.register<Copy>("prepareWinlatorJava") {
 
 val prepareWinlatorResources = tasks.register<Copy>("prepareWinlatorResources") {
     from(winlatorRoot.resolve("res")) {
-        // Keep PROJECT R's launcher identity; all other Winlator resources remain intact.
         exclude("mipmap-*/ic_launcher.png", "mipmap-*/ic_launcher_round.png")
         exclude("mipmap-anydpi-v26/ic_launcher.xml", "mipmap-anydpi-v26/ic_launcher_round.xml")
     }
@@ -60,8 +58,7 @@ tasks.named("preBuild").configure {
 }
 
 android {
-    // Winlator's Java source expects the generated R class in this namespace.
-    // Keep PROJECT R's existing applicationId so this remains an in-place app update.
+    // Winlator's upstream Java expects its R class in this namespace.
     namespace = "com.winlator"
     compileSdk = 35
     ndkVersion = "24.0.8215888"
@@ -69,7 +66,7 @@ android {
     defaultConfig {
         applicationId = "com.projectr.launcher"
         minSdk = 26
-        // Match Winlator's current storage/runtime assumptions for this first port.
+        // Keep upstream runtime storage/service behavior compatible; preserve Phase 4 version.
         targetSdk = 28
         versionCode = 4
         versionName = "0.4.0"
@@ -91,13 +88,8 @@ android {
         }
     }
 
-    androidResources {
-        noCompress += listOf("tzst", "sf2", "icp")
-    }
-
-    packaging {
-        jniLibs { useLegacyPackaging = true }
-    }
+    androidResources { noCompress += listOf("tzst", "sf2", "icp") }
+    packaging { jniLibs { useLegacyPackaging = true } }
 
     buildTypes {
         release {
@@ -118,6 +110,7 @@ dependencies {
     implementation(composeBom)
     androidTestImplementation(composeBom)
     implementation("androidx.core:core-ktx:1.15.0")
+    implementation("androidx.documentfile:documentfile:1.0.1")
     implementation("androidx.activity:activity-compose:1.10.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
